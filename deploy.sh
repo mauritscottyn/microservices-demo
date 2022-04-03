@@ -3,7 +3,7 @@ WORKDIR=$(pwd)
 
 # provision infrastructure
 cd terraform
-terraform injt
+terraform init
 terrafrom apply
 
 # setup kubectx
