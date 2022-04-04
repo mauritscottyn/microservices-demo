@@ -1,16 +1,17 @@
 #!/bin/bash
 WORKDIR=$(pwd)
 
-# provision infrastructure
+# update infrastructure with Terraform
 cd terraform
 terraform init
-terrafrom apply
+terraform apply -auto-approve
+cd ..
 
 # setup kubectx
 git clone https://github.com/ahmetb/kubectx $WORKDIR/kubectx
 export PATH=$PATH:$WORKDIR/kubectx
 
-# get cluster credentials
+# get kubernetes cluster credentials
 gcloud container clusters get-credentials --zone=europe-west1-b cluster-europe-west1;
 gcloud container clusters get-credentials --zone=europe-north1-b cluster-europe-north1;
 

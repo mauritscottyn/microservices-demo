@@ -4,6 +4,7 @@ provider "google" {
 	zone = "europe-west1-b"
 }
 
+# Configure gcs bucket to store tf state
 terraform {
   backend "gcs" {
     bucket  = "co-libry-services"
@@ -13,6 +14,7 @@ terraform {
 
 data "google_client_config" "default" {}
 
+# Kubernetes providers
 provider "kubernetes" {
   alias                  = "gke-cluster-west"
   host                   = "https://${module.gke-cluster-europe-west1.endpoint}"
@@ -59,6 +61,8 @@ module "boutique-west-network" {
   }
 }
 
+# Network module for cluster in europe north
+# Exists of main network and one subnet with two secondary ip ranges.
 module "boutique-north-network" {
   source       = "terraform-google-modules/network/google"
   project_id   = "co-libry-services"
@@ -89,6 +93,7 @@ module "boutique-north-network" {
   }
 }
 
+# Kubernetes cluster in europe-west1
 module "gke-cluster-europe-west1" {
   source     = "terraform-google-modules/kubernetes-engine/google"
   project_id = "co-libry-services"
@@ -96,25 +101,34 @@ module "gke-cluster-europe-west1" {
   regional   = false
   zones      = ["europe-west1-b"]
 
-  network                = module.boutique-west-network.network_name
-  subnetwork             = module.boutique-west-network.subnets_names[0]
-  ip_range_pods          = "pods-west-01"
-  ip_range_services      = "services-west-01"
-  create_service_account = true
+  network                  = module.boutique-west-network.network_name
+  subnetwork               = module.boutique-west-network.subnets_names[0]
+  ip_range_pods            = "pods-west-01"
+  ip_range_services        = "services-west-01"
+  create_service_account   = true
+  remove_default_node_pool = true
+  cluster_autoscaling      = {
+    "autoscaling_profile": "BALANCED",
+    "enabled": true,
+    "gpu_resources": [],
+    "max_cpu_cores": 8,
+    "max_memory_gb": 32,
+    "min_cpu_cores": 8,
+    "min_memory_gb": 32
+  }
+
 
   node_pools = [
     {
       name               = "node-pool-west1"
       machine_type       = "e2-standard-2"
-      min_count          = 1
-      max_count          = 4
       disk_size_gb       = 100
       disk_type          = "pd-ssd"
       image_type         = "COS"
       auto_repair        = true
-      auto_upgrade       = false
-      preemptible        = false
-      initial_node_count = 1
+      auto_upgrade       = true
+      initial_node_count = 4
+      autoscaling        = true
     },
   ]
 
@@ -146,27 +160,33 @@ module "gke-cluster-europe-north1" {
   regional   = false
   zones      = ["europe-north1-b"]
 
-  network                 = module.boutique-north-network.network_name
-  subnetwork              = module.boutique-north-network.subnets_names[0]
-  ip_range_pods           = "pods-north-01"
-  ip_range_services       = "services-north-01"
-  create_service_account  = true
+  network                  = module.boutique-north-network.network_name
+  subnetwork               = module.boutique-north-network.subnets_names[0]
+  ip_range_pods            = "pods-north-01"
+  ip_range_services        = "services-north-01"
+  create_service_account   = true
   remove_default_node_pool = true
-  initial_node_count       = 1
+  cluster_autoscaling      = {
+    "autoscaling_profile": "BALANCED",
+    "enabled": true,
+    "gpu_resources": [],
+    "max_cpu_cores": 8,
+    "max_memory_gb": 32,
+    "min_cpu_cores": 8,
+    "min_memory_gb": 32
+  }
 
   node_pools = [
     {
       name               = "node-pool-north1"
-      machine_type       = "n1-standard-1"
-      min_count          = 1
-      max_count          = 4
+      machine_type       = "e2-standard-2"
       disk_size_gb       = 100
       disk_type          = "pd-ssd"
       image_type         = "COS"
       auto_repair        = true
-      auto_upgrade       = false
-      preemptible        = false
-      initial_node_count = 1
+      auto_upgrade       = true
+      initial_node_count = 4
+      autoscaling        = true
     },
   ]
 
