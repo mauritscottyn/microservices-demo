@@ -4,6 +4,13 @@ provider "google" {
 	zone = "europe-west1-b"
 }
 
+terraform {
+  backend "gcs" {
+    bucket  = "co-libry-services"
+    prefix  = "terraform/state"
+  }
+}
+
 data "google_client_config" "default" {}
 
 provider "kubernetes" {
