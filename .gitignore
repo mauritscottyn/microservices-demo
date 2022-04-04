@@ -12,4 +12,12 @@ pkg/
 .project
 .eclipse.buildship.core.prefs
 release/wi-kubernetes-manifests.yaml
+# local .terraform directories
 **/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# .tfvars files
+*.tfvars
